@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Scatterplots</title>
+    <style>
+        /* General body styling */
+        body {
+            font-family: sans-serif;
+        }
+
+        /* SVG container for scatterplots */
+        svg {
+            width: 40vw;
+            height: 40vw;
+        }
+
+        /* Flex container for layout alignment */
+        div {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        /* Styling for the list container */
+        .list-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 50vw;
+            padding: 20px;
+            background-color: #f3f3f3;
+            border-left: 1px solid #ccc;
+            overflow-y: auto;
+        }
+
+        /* List container heading styling */
+        .list-container h3 {
+            font-size: 18px;
+            color: #444;
+            margin-bottom: 10px;
+        }
+
+        /* Selected item list styling */
+        #selected-list {
+            padding: 10px;
+            list-style-type: none;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            max-height: 100%;
+            overflow-y: auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            flex-grow: 1;
+        }
+
+        /* Individual list items */
+        #selected-list li {
+            padding: 10px;
+            margin: 0;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+            color: #555;
+        }
+
+        /* Remove border for the last list item */
+        #selected-list li:last-child {
+            border-bottom: none;
+        }
+
+        /* Adjust spacing for unordered lists */
+        ul {
+            margin-left: 100px;
+            margin-right: 100px;
+        }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="js/scatterplot.problem.js"></script>
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+    <!-- Scatterplot SVG containers -->
+    <div>
+        <svg viewBox="0 0 1000 1000" id="figure1"></svg>
+        <svg viewBox="0 0 1000 1000" id="figure2"></svg>
+    </div>
+
+    <!-- Container for the selected items list -->
+    <div>
+        <ul id="selected-list"></ul>
+    </div>
+
+    <script>
+        // Load data from CSV and render scatterplots
+        d3.csv("./data/car_sample_data.csv").then(data => {
+            // Prepare filtered data for plotting
+            const filteredData = data.map(d => ({
+                Model: d.Model,
+                Type: d.Type,
+                Price: d.Price,
+                Country: d.Country,
+                Reliability: d.Reliability,
+                MPG: d.MPG,
+                Weight: d.Weight,
+                EngineSizeCI: d.EngineSizeCI,
+                HP: d.HP
+            }));
+
+            // Render the first scatterplot (MPG vs Price)
+            scatter_plot(
+                data = filteredData,
+                "#figure1",
+                title = "MPG vs Price",
+                xCol = "Price",
+                yCol = "MPG",
+                rCol = "Weight",
+                legend = [],
+                colorCol = "Country",
+                margin = 150
+            );
+
+            // Render the second scatterplot (MPG vs Engine Size)
+            scatter_plot(
+                data = filteredData,
+                "#figure2",
+                title = "MPG vs Engine Size",
+                xCol = "EngineSizeCI",
+                yCol = "MPG",
+                rCol = "Weight",
+                legend = [],
+                colorCol = "Country",
+                margin = 150
+            );
+
+            // Handle mouse movement to update selected list
+            document.addEventListener("mousemove", event => {
+                const listBox = d3.select("#selected-list");
+
+                // Get all selected points from the scatterplots
+                const selectedPoints = Array.from(document.querySelectorAll(".selected"));
+                const ids = [...new Set(selectedPoints.map(d => +d.id.split(" ")[0].slice(3)))];
+
+                // Clear existing list items
+                listBox.selectAll("li").remove();
+
+                if (ids.length > 0) {
+                    // Add new list items for selected points
+                    listBox.selectAll("li")
+                        .data(ids)
+                        .enter()
+                        .append("li")
+                        .text(d => {
+                            const point = filteredData[d];
+                            return `${point.Model} (${point.Type})`; // Display Model and Type
+                        });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
